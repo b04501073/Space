@@ -56,6 +56,18 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           markers: Set<Marker>.of(markers.values),
           circles: Set<Circle>.of(_circles.values),
         ),
+        Align(
+          alignment: FractionalOffset.bottomCenter,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: FlatButton(
+              onPressed: () {
+                //todo: should trigger the flow of the creation of a new activity
+              },
+              child: Icon(Icons.add),
+            ),
+          ),
+        ),
       ],
     );
   }
