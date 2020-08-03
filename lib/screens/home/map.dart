@@ -185,15 +185,6 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     // todo: operation on dataBase when exit app or lose connection
-    // switch (state) {
-    //   case AppLifecycleState.inactive:
-    //     await deleteUserLocation();
-    //     break;
-    //   case AppLifecycleState.resumed:
-    //     await resumeUserLocation();
-    //     break;
-    //   default:
-    // }
   }
 
   @override
