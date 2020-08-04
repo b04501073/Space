@@ -22,8 +22,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
   GoogleMapController _controller;
   final Location location = Location();
 
-  Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
-  Map<CircleId, Circle> _circles = <CircleId, Circle>{};
+  Map<MarkerId, Marker> _markers = <MarkerId, Marker>{};
 
   Firestore firestore = Firestore.instance;
   Geoflutterfire geo = Geoflutterfire();
@@ -53,8 +52,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           myLocationButtonEnabled: true,
           myLocationEnabled: true,
           compassEnabled: true,
-          markers: Set<Marker>.of(markers.values),
-          circles: Set<Circle>.of(_circles.values),
+          markers: Set<Marker>.of(_markers.values),
         ),
         Align(
           alignment: FractionalOffset.bottomCenter,
@@ -120,8 +118,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
   //todo: should cast the documentList to customized class
   void _updateMapInfo(List<DocumentSnapshot> documentList) async {
     setState(() {
-      markers.clear();
-      _circles.clear();
+      _markers.clear();
     });
     updateMarks(documentList);
   }
@@ -188,7 +185,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           markerId: markerId,
         );
         setState(() {
-          markers[markerId] = nMark;
+          _markers[markerId] = nMark;
         });
       }
     });
