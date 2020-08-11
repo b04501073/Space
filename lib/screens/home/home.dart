@@ -1,3 +1,4 @@
+import 'package:Space/screens/home/activity_form.dart';
 import 'package:Space/screens/home/map.dart';
 import 'package:Space/services/auth.dart';
 import 'package:Space/shared/loading.dart';
@@ -28,29 +29,48 @@ class _HomeState extends State<Home> {
     super.initState();
   }
 
+    void _showActivityPanel(){
+      showModalBottomSheet(context: context, builder: (context){
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 60.0),
+            child: Activityform(),
+          );
+        }
+      );
+    }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.brown[50],
-      appBar: AppBar(
-        title: Text("Home"),
-        backgroundColor: Colors.brown[400],
-        elevation: 0.0,
-        actions: [
-          FlatButton.icon(
-            icon: Icon(Icons.person),
-            label: Text("logout"),
-            onPressed: () async {
-              dynamic result = await _auth.signOut();
-            },
-          ),
-        ],
+    return MaterialApp(
+      home: Scaffold(
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _showActivityPanel(),
+          backgroundColor: Colors.brown[500],
+          child: Icon(Icons.add),
+        ),
+        
+        backgroundColor: Colors.brown[50],
+        appBar: AppBar(
+          title: Text("Home"),
+          backgroundColor: Colors.brown[400],
+          elevation: 0.0,
+          actions: [
+            FlatButton.icon(
+              icon: Icon(Icons.person),
+              label: Text("logout"),
+              onPressed: () async {
+                dynamic result = await _auth.signOut();
+              },
+            ),
+          ],
+        ),
+        body: (_currentLocation != null)
+            ? FireMap(
+                initialLocation: _currentLocation,
+              )
+            : Loading(),
       ),
-      body: (_currentLocation != null)
-          ? FireMap(
-              initialLocation: _currentLocation,
-            )
-          : Loading(),
     );
   }
 }
