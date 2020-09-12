@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:Space/services/auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -114,62 +113,12 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
     updateMarks(documentList);
   }
 
-  // Future<Uint8List> getUserPicture(var thumbnailUrl) async {
-  //   final File markerImageFile =
-  //       await DefaultCacheManager().getSingleFile(thumbnailUrl);
-  //   final Uint8List markerImageBytes = await markerImageFile.readAsBytes();
-
-  //   final Codec markerImageCodec = await instantiateImageCodec(
-  //     markerImageBytes,
-  //     targetWidth: 100,
-  //   );
-  //   final FrameInfo frameInfo = await markerImageCodec.getNextFrame();
-  //   final ByteData byteData = await frameInfo.image.toByteData(
-  //     format: ImageByteFormat.png,
-  //   );
-  //   final Uint8List resizedMarkerImageBytes = byteData.buffer.asUint8List();
-  //   return resizedMarkerImageBytes;
-  // }
-
-  // void updateCircles(List<DocumentSnapshot> documentList, String currentState) {
-  //   CircleId circleId = CircleId(userId);
-  //   var nCircle = Circle(
-  //     center: LatLng(
-  //       currentLocation.value.latitude,
-  //       currentLocation.value.longitude,
-  //     ),
-  //     circleId: circleId,
-  //     fillColor: Colors.blueAccent.withOpacity(0.3),
-  //     radius: 10000,
-  //     strokeWidth: 1,
-  //   );
-  //   setState(() {
-  //     _circles[circleId] = nCircle;
-  //   });
-  // }
-
   void updateMarks(List<DocumentSnapshot> documentList) {
     documentList.forEach((DocumentSnapshot document) {
       if (document.documentID != userId) {
         GeoPoint geo = document.data["position"]["geopoint"];
         final MarkerId markerId = MarkerId(document.documentID.toString());
-        // todo: fetch other users' propics
-        // firestore
-        //     .collection("users")
-        //     .document(document.documentID)
-        //     .get()
-        //     .then((snapShop) async {
-        //   var thumbnailUrl = snapShop.data["thumbnailUrl"];
-        //   var nMark = Marker(
-        //     position: LatLng(geo.latitude, geo.longitude),
-        //     icon:
-        //         BitmapDescriptor.fromBytes(await getUserPicture(thumbnailUrl)),
-        //     markerId: markerId,
-        //   );
-        //   setState(() {
-        //     markers[markerId] = nMark;
-        //   });
-        // });
+    
         var nMark = Marker(
           position: LatLng(geo.latitude, geo.longitude),
           icon: BitmapDescriptor.defaultMarker,
@@ -184,16 +133,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    // todo: operation on dataBase when exit app or lose connection
-    // switch (state) {
-    //   case AppLifecycleState.inactive:
-    //     await deleteUserLocation();
-    //     break;
-    //   case AppLifecycleState.resumed:
-    //     await resumeUserLocation();
-    //     break;
-    //   default:
-    // }
+
   }
 
   @override
