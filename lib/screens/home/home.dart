@@ -4,6 +4,7 @@ import 'package:Space/services/auth.dart';
 import 'package:Space/shared/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:Space/screens/home/activry_list.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -29,27 +30,28 @@ class _HomeState extends State<Home> {
     super.initState();
   }
 
-    void _showActivityPanel(){
-      showModalBottomSheet(context: context, builder: (context){
-          return Container(
-            padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 60.0),
-            child: Activityform(),
-          );
-        }
-      );
-    }
+  void _showActivityPanel(){
+    showModalBottomSheet(context: context, builder: (context){
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 60.0),
+          child: Activityform(),
+        );
+      }
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        /*
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showActivityPanel(),
           backgroundColor: Colors.brown[500],
           child: Icon(Icons.add),
         ),
-        
+        */
         backgroundColor: Colors.brown[50],
         appBar: AppBar(
           title: Text("Home"),
@@ -66,8 +68,18 @@ class _HomeState extends State<Home> {
           ],
         ),
         body: (_currentLocation != null)
-            ? FireMap(
-                initialLocation: _currentLocation,
+            ? Stack(
+                children: <Widget> [
+                  FireMap(
+                    initialLocation: _currentLocation,
+                  ),
+                  Positioned(
+                    child: Align(
+                      alignment: FractionalOffset.bottomLeft,
+                      child: ActivityList(),
+                    )
+                  ),
+                ]
               )
             : Loading(),
       ),

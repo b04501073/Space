@@ -13,7 +13,7 @@ class _ActivityformState extends State<Activityform> {
       children: <Widget>[
         Text(
           ''
-        )
+        ),
         TextFormField(
 
         ),
