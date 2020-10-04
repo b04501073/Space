@@ -1,10 +1,10 @@
 import 'package:Space/screens/home/activity_form.dart';
+import 'package:Space/screens/home/activity_list/activry_list.dart';
 import 'package:Space/screens/home/map.dart';
 import 'package:Space/services/auth.dart';
 import 'package:Space/shared/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
-import 'package:Space/screens/home/activry_list.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -43,6 +43,9 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        //canvasColor: Colors.transparent, //widget default color會是透明的
+      ),
       home: Scaffold(
         /*
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
