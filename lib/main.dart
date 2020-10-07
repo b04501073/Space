@@ -2,10 +2,14 @@ import 'package:Space/model/user.dart';
 import 'package:Space/screens/authenticate/authenticate.dart';
 import 'package:Space/screens/wrapper.dart';
 import 'package:Space/services/auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
+  // await Firebase.initializeApp();
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -13,7 +17,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return StreamProvider<User>.value(
+    return StreamProvider<SpaceUser>.value(
         value: AuthService().user,
         builder: (context, snapshot) {
           return MaterialApp(
@@ -22,6 +26,7 @@ class MyApp extends StatelessWidget {
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
             home: Wrapper(),
+            debugShowCheckedModeBanner: false,
           );
         });
   }

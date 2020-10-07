@@ -1,5 +1,6 @@
-class User {
+class SpaceUser {
   final String uid;
-
-  User({this.uid});
+  String imageUrl;
+  String thumbNailUrl;
+  SpaceUser({this.uid});
 }

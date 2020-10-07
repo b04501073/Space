@@ -118,12 +118,13 @@ class _CreateActivityState extends State<CreateActivity> {
   }
 
   _pickDate() async {
-    DateTime date = await showDatePicker(
-      context: context,
-      firstDate: DateTime(DateTime.now().year - 5),
-      lastDate: DateTime(DateTime.now().year + 5),
-      initialDate: pickedDate,
-    );
+    DateTime date = await showDatePicker();
+    // DateTime date = await showDatePicker(
+    //   context: context,
+    //   firstDate: DateTime(DateTime.now().year - 5),
+    //   lastDate: DateTime(DateTime.now().year + 5),
+    //   initialDate: pickedDate,
+    // );
     if (date != null)
       setState(() {
         pickedDate = date;
