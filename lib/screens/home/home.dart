@@ -37,6 +37,7 @@ class _HomeState extends State<Home> {
   }
 
   _setProPic() async {
+    print("setPropic");
     var url = await _auth.getUserImgUrl(_auth.userId);
     if (url != null) {
       try {

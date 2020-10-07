@@ -25,6 +25,7 @@ class AuthService {
   }
 
   Stream<SpaceUser> get user {
+    print("signed in");
     return _auth
         .authStateChanges()
         .map((User user) => _userFromFireBaseUser(user));
@@ -120,7 +121,9 @@ class AuthService {
   Future<dynamic> getUserImgUrl(String userId) async {
     var userRef = firestore.collection("users").doc(userId);
     DocumentSnapshot docSnap = await userRef.get();
-    return docSnap.data()["userProPicURL"];
+    return docSnap.data() != null && docSnap.data().containsKey("userProPicURL")
+        ? docSnap.data()["userProPicURL"]
+        : null;
   }
 
 // Future<dynamic> getUserP
