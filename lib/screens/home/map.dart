@@ -25,10 +25,19 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
   final Location location = Location();
   AuthService _auth = AuthService();
 
+<<<<<<< HEAD
   Map<MarkerId, Marker> usersMarkers = <MarkerId, Marker>{};
   Map<MarkerId, Marker> activitiesMarkers = <MarkerId, Marker>{};
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   // Map<CircleId, Circle> _circles = <CircleId, Circle>{};
+=======
+  Map<MarkerId, Marker> _markers = <MarkerId, Marker>{};
+
+  Firestore firestore = Firestore.instance;
+  Geoflutterfire geo = Geoflutterfire();
+  FirebaseApp firebase = FirebaseApp.instance;
+  String userId;
+>>>>>>> b67e1b61db932a432dcd1c7b89afb7d28c6d215c
 
   var currentLocation = BehaviorSubject<LocationData>();
 
@@ -53,8 +62,24 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           myLocationButtonEnabled: true,
           myLocationEnabled: true,
           compassEnabled: true,
+<<<<<<< HEAD
           markers: Set<Marker>.of(markers.values),
           // circles: Set<Circle>.of(_circles.values),
+=======
+          markers: Set<Marker>.of(_markers.values),
+        ),
+        Align(
+          alignment: FractionalOffset.bottomCenter,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: FlatButton(
+              onPressed: () {
+                //todo: should trigger the flow of the creation of a new activity
+              },
+              child: Icon(Icons.add),
+            ),
+          ),
+>>>>>>> b67e1b61db932a432dcd1c7b89afb7d28c6d215c
         ),
       ],
     );
@@ -110,6 +135,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
   //todo: should cast the documentList to customized class
   void _updateUsersMapInfo(List<DocumentSnapshot> documentList) async {
     setState(() {
+<<<<<<< HEAD
       usersMarkers.forEach(
         (key, value) {
           if (!isMarkerInDocumentList(documentList, key)) {
@@ -117,6 +143,9 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           }
         },
       );
+=======
+      _markers.clear();
+>>>>>>> b67e1b61db932a432dcd1c7b89afb7d28c6d215c
     });
 
     updateUsersMarks(documentList);
@@ -185,9 +214,13 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           markerId: markerId,
         );
         setState(() {
+<<<<<<< HEAD
           markers[markerId] = marker;
 
           activitiesMarkers[markerId] = marker;
+=======
+          _markers[markerId] = nMark;
+>>>>>>> b67e1b61db932a432dcd1c7b89afb7d28c6d215c
         });
       } else {
         //   // load images
@@ -196,6 +229,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
     });
   }
 
+<<<<<<< HEAD
   void setAvatarIconOfMarks(
       MarkerId markerId, String userId, GeoPoint geo, int size) async {
     var userImgUrl = await _auth.getUserImgUrl(userId);
@@ -242,6 +276,11 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
 
       activitiesMarkers[markerId] = marker;
     });
+=======
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    // todo: operation on dataBase when exit app or lose connection
+>>>>>>> b67e1b61db932a432dcd1c7b89afb7d28c6d215c
   }
 
 //https://stackoverflow.com/questions/56700620/how-can-i-draw-a-image-with-circular-border-in-canvas
