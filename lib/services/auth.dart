@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:location/location.dart';
+import 'package:provider/provider.dart';
 
 class AuthService {
   static final AuthService _singleton = AuthService._internal();
@@ -19,13 +20,13 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   Geoflutterfire geo = Geoflutterfire();
+  StreamProvider<List<SpaceUser>> _friends;
 
   SpaceUser _userFromFireBaseUser(User user) {
     return user != null ? SpaceUser(uid: user.uid) : null;
   }
 
   Stream<SpaceUser> get user {
-    print("signed in");
     return _auth
         .authStateChanges()
         .map((User user) => _userFromFireBaseUser(user));
@@ -125,6 +126,52 @@ class AuthService {
         ? docSnap.data()["userProPicURL"]
         : null;
   }
+
+  void listenOnFriendsList(Function callback) async {
+    var friendRef = firestore.collection("Friend_lists").doc(userId);
+
+    if (!(await checkIfDocExist(friendRef))) {
+      friendRef.set(
+        {"friends": List<User>()},
+      );
+    }
+    friendRef.snapshots().listen(
+      (data) {
+        List<SpaceUser> friendIDs = List<SpaceUser>();
+
+        try {
+          List<dynamic> idList = data["friends"];
+
+          idList.forEach(
+            (element) {
+              friendIDs.add(SpaceUser(uid: element.toString()));
+            },
+          );
+          callback(friendIDs);
+        } catch (e) {
+          print(e);
+        }
+      },
+    );
+  }
+
+  Future<dynamic> getUserByID(String userID) async {
+    DocumentSnapshot ds = await firestore.collection("users").doc(userID).get();
+    if (ds.exists) {
+      SpaceUser user = SpaceUser(uid: userID);
+      user.imageUrl = ds["userProPicURL"];
+      return user;
+    }
+    return null;
+  }
+
+  Future<bool> checkIfDocExist(DocumentReference ref) async {
+    DocumentSnapshot ds = await ref.get();
+    return ds.exists;
+  }
+  // Future<dynamic> getFirendsList() async {
+  //   return await firestore.collection("Friend_lists").doc(userId).get();
+  // }
 
 // Future<dynamic> getUserP
 }

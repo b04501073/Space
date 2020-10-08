@@ -1,13 +1,17 @@
 import 'dart:io';
+import 'dart:math';
 
+import 'package:Space/model/user.dart';
 import 'package:Space/screens/home/create.dart';
 import 'package:Space/screens/home/map.dart';
 import 'package:Space/services/auth.dart';
 import 'package:Space/shared/loading.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:location/location.dart';
+import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -19,6 +23,8 @@ class _HomeState extends State<Home> {
   LocationData _currentLocation;
   Image _image;
   final ImagePicker picker = ImagePicker();
+  List<SpaceUser> _friends;
+  double plusWidth = 60;
 
   Future<void> getCurrentLocation() async {
     Location location = new Location();
@@ -33,11 +39,11 @@ class _HomeState extends State<Home> {
   void initState() {
     getCurrentLocation();
     _setProPic();
+    _setFirendsListListener();
     super.initState();
   }
 
   _setProPic() async {
-    print("setPropic");
     var url = await _auth.getUserImgUrl(_auth.userId);
     if (url != null) {
       try {
@@ -53,6 +59,16 @@ class _HomeState extends State<Home> {
     }
   }
 
+  _setFirendsListListener() {
+    _auth.listenOnFriendsList(upDataFriendsList);
+  }
+
+  void upDataFriendsList(List<SpaceUser> friends) {
+    setState(() {
+      _friends = friends;
+    });
+  }
+
   _pickImage(ImageSource imageSource) async {
     PickedFile image =
         await picker.getImage(source: imageSource, imageQuality: 20);
@@ -66,44 +82,110 @@ class _HomeState extends State<Home> {
 
   void _showPicker(context) {
     showModalBottomSheet(
-        context: context,
-        builder: (BuildContext bc) {
-          return SafeArea(
-            child: Container(
-              child: new Wrap(
-                children: <Widget>[
-                  new ListTile(
-                    leading: new Icon(Icons.photo_library),
-                    title: new Text('Photo Library'),
-                    onTap: () {
-                      _pickImage(ImageSource.gallery);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  new ListTile(
-                    leading: new Icon(Icons.photo_camera),
-                    title: new Text('Camera'),
-                    onTap: () {
-                      _pickImage(ImageSource.camera);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
+      context: context,
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Container(
+            child: new Wrap(
+              children: <Widget>[
+                new ListTile(
+                  leading: new Icon(Icons.photo_library),
+                  title: new Text('Photo Library'),
+                  onTap: () {
+                    _pickImage(ImageSource.gallery);
+                    Navigator.of(context).pop();
+                  },
+                ),
+                new ListTile(
+                  leading: new Icon(Icons.photo_camera),
+                  title: new Text('Camera'),
+                  onTap: () {
+                    _pickImage(ImageSource.camera);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> getFriends(List<SpaceUser> users) {
+    if (users == null) {
+      return [];
+    }
+    return List.generate((users.length + 1), (index) {
+      if (index == 0) {
+        return Container(
+          alignment: Alignment.center,
+          width: 60.0,
+          height: 60.0,
+          margin: EdgeInsets.all(4.0),
+        );
+      } else {
+        var path = Path();
+        path.addOval(Rect.fromCircle(
+          center: Offset(36, 36),
+          radius: 33.0,
+        ));
+
+        // assume the number of messages is equal to the index
+        // Todo: dynamic updates the message number
+        var numberOfMessages = index - 1;
+
+        var totalLength = 2 * pi * 33;
+        // var dashPattern = double[];
+        var spaceLength = numberOfMessages == 0 ? 0.toDouble() : 4.toDouble();
+        var dashLength = totalLength / numberOfMessages - spaceLength;
+
+        return DottedBorder(
+          dashPattern: [dashLength, spaceLength],
+          strokeCap: StrokeCap.round,
+          strokeWidth: 2,
+          customPath: (size) => path,
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 2,
+                    blurRadius: 2,
+                    offset: Offset(0, 0), // changes position of shadow
+                  ),
+                ]),
+            alignment: Alignment.center,
+            width: 60.0,
+            height: 60.0,
+            margin: EdgeInsets.all(4.0),
+            child: Text("${index + 1}"),
+          ),
+        );
+      }
+    });
+  }
+
+  _onUpdateScroll(ScrollMetrics _metrics) {
+    var offSet = _metrics.extentBefore;
+    if (offSet < 40) {
+      setState(() {
+        plusWidth = 60 - offSet;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
-      appBar: AppBar(
-        title: Text("Home"),
-        backgroundColor: Colors.blue[400],
-        elevation: 0.0,
-      ),
+      // appBar: AppBar(
+      //   title: Text("Home"),
+      //   backgroundColor: Colors.blue[400],
+      //   elevation: 0.0,
+      // ),
       drawer: Drawer(
         // Add a ListView to the drawer. This ensures the user can scroll
         // through the options in the drawer if there isn't enough vertical
@@ -167,10 +249,73 @@ class _HomeState extends State<Home> {
       ),
       body: (_currentLocation != null)
           ? new Scaffold(
-              body: new Center(
-                child: FireMap(
-                  initialLocation: _currentLocation,
-                ),
+              body: Stack(
+                children: [
+                  Center(
+                    child: FireMap(
+                      initialLocation: _currentLocation,
+                    ),
+                  ),
+                  SafeArea(
+                    child: Container(
+                        height: 120,
+                        // color: Colors.black,
+                        child: Stack(
+                          // crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Column(
+                              children: [
+                                Flexible(
+                                  child:
+                                      NotificationListener<ScrollNotification>(
+                                    onNotification: (scrollNotification) {
+                                      if (scrollNotification
+                                          is ScrollUpdateNotification) {
+                                        _onUpdateScroll(
+                                            scrollNotification.metrics);
+                                      }
+                                    },
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: getFriends(_friends),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                print("add new friends");
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.5),
+                                      spreadRadius: 2,
+                                      blurRadius: 2,
+                                      offset: Offset(
+                                          0, 1), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                width: plusWidth,
+                                height: 60.0,
+                                margin: EdgeInsets.all(4.0),
+                                child: Text("+"),
+                              ),
+                            ),
+                          ],
+                        )),
+                  ),
+                ],
               ),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.centerFloat,
