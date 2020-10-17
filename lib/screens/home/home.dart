@@ -3,7 +3,9 @@ import 'dart:math';
 
 import 'package:Space/model/user.dart';
 import 'package:Space/screens/home/create.dart';
+import 'package:Space/screens/home/friend_adding_page.dart';
 import 'package:Space/screens/home/map.dart';
+import 'package:Space/screens/home/user_ID_setting.dart';
 import 'package:Space/services/auth.dart';
 import 'package:Space/shared/loading.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -22,6 +24,7 @@ class _HomeState extends State<Home> {
   final AuthService _auth = AuthService();
   LocationData _currentLocation;
   Image _image;
+  String _publicID = "";
   final ImagePicker picker = ImagePicker();
   List<SpaceUser> _friends;
   double plusWidth = 60;
@@ -38,29 +41,36 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     getCurrentLocation();
-    _setProPic();
+    _setProPicListener();
     _setFirendsListListener();
+    _setUserPublicID();
     super.initState();
   }
 
-  _setProPic() async {
-    var url = await _auth.getUserImgUrl(_auth.userId);
-    if (url != null) {
-      try {
-        final File markerImageFile =
-            await DefaultCacheManager().getSingleFile(url);
+  _setUserPublicID() {
+    _auth.listenOnUserPublicID((id) {
+      setState(() {
+        _publicID = id;
+      });
+    });
+  }
+
+  _setProPicListener() {
+    _auth.listenOnProPic((imgUrl) {
+      if (imgUrl != "") {
         setState(() {
-          _image = Image(image: FileImage(markerImageFile));
+          _image = Image.network(imgUrl);
         });
-      } on Exception catch (_) {
-        _image = null;
-        print('failed to load image');
       }
-    }
+    });
   }
 
   _setFirendsListListener() {
-    _auth.listenOnFriendsList(upDataFriendsList);
+    _auth.listenOnFriendsList((friends) {
+      setState(() {
+        _friends = friends;
+      });
+    });
   }
 
   void upDataFriendsList(List<SpaceUser> friends) {
@@ -218,6 +228,23 @@ class _HomeState extends State<Home> {
                   _showPicker(context);
                 },
               ),
+              accountName: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserIDSetting(
+                        originalID: _publicID != "" ? _publicID : null,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  _publicID != "" ? _publicID : "set User's public ID",
+                  style: TextStyle(
+                      color: _publicID != "" ? Colors.black : Colors.grey[800]),
+                ),
+              ),
             ),
             ListTile(
               title: Text('Item 1'),
@@ -238,7 +265,7 @@ class _HomeState extends State<Home> {
                     color: Colors.blue,
                     textColor: Colors.white,
                     onPressed: () async {
-                      dynamic result = await _auth.signOut();
+                      await _auth.signOut();
                     },
                   ),
                 ),
@@ -289,7 +316,11 @@ class _HomeState extends State<Home> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                print("add new friends");
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => FriendAddingPage()),
+                                );
                               },
                               child: Container(
                                 decoration: BoxDecoration(

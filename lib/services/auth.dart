@@ -20,7 +20,6 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   Geoflutterfire geo = Geoflutterfire();
-  StreamProvider<List<SpaceUser>> _friends;
 
   SpaceUser _userFromFireBaseUser(User user) {
     return user != null ? SpaceUser(uid: user.uid) : null;
@@ -63,12 +62,10 @@ class AuthService {
   }
 
   Future<void> setUserProPicUrl(String imgUrl) async {
-    await deletePreviousProPic();
-    await firestore.runTransaction((transaction) async => transaction.set(
+    await firestore.runTransaction((transaction) async => transaction.update(
         firestore.collection("users").doc(userId), {"userProPicURL": imgUrl}));
   }
 
-  Future deletePreviousProPic() async {}
   Future signInWithEmail(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
@@ -155,6 +152,48 @@ class AuthService {
     );
   }
 
+  void listenOnProPic(Function callback) async {
+    var userRef = firestore.collection("users").doc(userId);
+
+    if (!(await checkIfDocExist(userRef)) ||
+        !(await userRef.get()).data().containsKey("userProPicURL")) {
+      await userRef.update(
+        {"userProPicURL": ""},
+      );
+    }
+    userRef.snapshots().listen(
+      (data) {
+        try {
+          String imgUrl = data["userProPicURL"];
+          callback(imgUrl);
+        } catch (e) {
+          print(e);
+        }
+      },
+    );
+  }
+
+  void listenOnUserPublicID(Function callback) async {
+    var userRef = firestore.collection("users").doc(userId);
+
+    if (!(await checkIfDocExist(userRef)) ||
+        !(await userRef.get()).data().containsKey("publicID")) {
+      await userRef.update(
+        {"publicID": ""},
+      );
+    }
+    userRef.snapshots().listen(
+      (data) {
+        try {
+          String id = data["publicID"];
+          callback(id);
+        } catch (e) {
+          print(e);
+        }
+      },
+    );
+  }
+
   Future<dynamic> getUserByID(String userID) async {
     DocumentSnapshot ds = await firestore.collection("users").doc(userID).get();
     if (ds.exists) {
@@ -169,9 +208,54 @@ class AuthService {
     DocumentSnapshot ds = await ref.get();
     return ds.exists;
   }
-  // Future<dynamic> getFirendsList() async {
-  //   return await firestore.collection("Friend_lists").doc(userId).get();
-  // }
 
-// Future<dynamic> getUserP
+  Future<bool> isSetUserIDSuccessful(String idToSet) async {
+    if (await checkIfPublicIDExist(idToSet)) {
+      return false;
+    } else {
+      firestore.collection("users").doc(userId).update({
+        "publicID": idToSet,
+      });
+      return true;
+    }
+  }
+
+  Future<bool> checkIfPublicIDExist(String idForChecking) async {
+    QuerySnapshot _query = await firestore
+        .collection("users")
+        .where("publicID", isEqualTo: idForChecking)
+        .get();
+
+    if (_query.docs.length > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> isFriendExist(String friendID) async {
+    return (await firestore
+                .collection("users")
+                .where("publicID", isEqualTo: friendID)
+                .get())
+            .docs
+            .length >
+        0;
+  }
+
+  Future<bool> addFriendByID(String friendID) async {
+    print(friendID);
+    if (friendID != userId && await isFriendExist(friendID)) {
+      firestore.collection("Friend_lists").doc(userId).update(
+        {
+          "friends": FieldValue.arrayUnion(
+            [friendID],
+          ),
+        },
+      );
+      print("true");
+      return true;
+    }
+    print("false");
+    return false;
+  }
 }
