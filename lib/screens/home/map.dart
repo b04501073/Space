@@ -109,17 +109,18 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
 
   //todo: should cast the documentList to customized class
   void _updateUsersMapInfo(List<DocumentSnapshot> documentList) async {
+    List<DocumentSnapshot> friendList =
+        _auth.filterFriendLocation(documentList);
     setState(() {
       usersMarkers.forEach(
         (key, value) {
-          if (!isMarkerInDocumentList(documentList, key)) {
+          if (!isMarkerInDocumentList(friendList, key)) {
             markers.remove(key);
           }
         },
       );
     });
-
-    updateUsersMarks(documentList);
+    updateUsersMarks(friendList);
   }
 
   void _updateActivitiesMapInfo(List<DocumentSnapshot> documentList) async {
@@ -167,7 +168,7 @@ class _FireMapState extends State<FireMap> with WidgetsBindingObserver {
           });
         } else {
           // load images
-          setAvatarIconOfMarks(markerId, document["user"], geo, 200);
+          setAvatarIconOfMarks(markerId, document.id, geo, 200);
         }
       }
     });

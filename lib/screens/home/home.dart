@@ -73,12 +73,6 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void upDataFriendsList(List<SpaceUser> friends) {
-    setState(() {
-      _friends = friends;
-    });
-  }
-
   _pickImage(ImageSource imageSource) async {
     PickedFile image =
         await picker.getImage(source: imageSource, imageQuality: 20);

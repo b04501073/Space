@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:Space/model/user.dart';
@@ -6,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:location/location.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 
 class AuthService {
   static final AuthService _singleton = AuthService._internal();
@@ -20,6 +21,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   Geoflutterfire geo = Geoflutterfire();
+  List<dynamic> friendList;
 
   SpaceUser _userFromFireBaseUser(User user) {
     return user != null ? SpaceUser(uid: user.uid) : null;
@@ -45,11 +47,20 @@ class AuthService {
       if (userImg != null) {
         uploadImageToFirebase(user.uid, userImg);
       }
-      return _userFromFireBaseUser(user);
+      SpaceUser customUser = _userFromFireBaseUser(user);
+      await initUserInfo(customUser);
+      return customUser;
     } catch (e) {
       print(e.toString());
       return null;
     }
+  }
+
+  initUserInfo(SpaceUser user) {
+    firestore.collection("users").doc(userId).set({
+      "publicID": user.publicID != null ? user.publicID : "",
+      "userProPicURL": user.imageUrl != null ? user.imageUrl : "",
+    });
   }
 
   Future<void> uploadImageToFirebase(String userID, File imageFile) async {
@@ -88,11 +99,10 @@ class AuthService {
 
   Future<void> updataUserLocation(GeoFirePoint pointToAdd) async {
     await firestore.runTransaction(
-      (transaction) async => transaction.set(
+      (transaction) async => transaction.update(
         firestore.collection("userLocations").doc(userId),
         {
           "position": pointToAdd.data,
-          "user": userId,
         },
       ),
     );
@@ -107,6 +117,18 @@ class AuthService {
         strictMode: true);
   }
 
+  List<DocumentSnapshot> filterFriendLocation(
+      List<DocumentSnapshot> documentList) {
+    List<DocumentSnapshot> filteredFriendList = List<DocumentSnapshot>();
+    for (var doc in documentList) {
+      if (friendList.contains(doc.id)) {
+        filteredFriendList.add(doc);
+      }
+    }
+
+    return filteredFriendList;
+  }
+
   Stream<List<DocumentSnapshot>> getActivitiesGeoCollection(LocationData loc) {
     var queryRef = firestore.collection("activity_locations");
     return geo.collection(collectionRef: queryRef).within(
@@ -118,7 +140,12 @@ class AuthService {
 
   Future<dynamic> getUserImgUrl(String userId) async {
     var userRef = firestore.collection("users").doc(userId);
+
     DocumentSnapshot docSnap = await userRef.get();
+
+    if (!docSnap.exists) {
+      return null;
+    }
     return docSnap.data() != null && docSnap.data().containsKey("userProPicURL")
         ? docSnap.data()["userProPicURL"]
         : null;
@@ -133,18 +160,27 @@ class AuthService {
       );
     }
     friendRef.snapshots().listen(
-      (data) {
+      (data) async {
         List<SpaceUser> friendIDs = List<SpaceUser>();
 
         try {
           List<dynamic> idList = data["friends"];
+          friendList = idList;
+          //Todo: fetch user images
 
-          idList.forEach(
-            (element) {
-              friendIDs.add(SpaceUser(uid: element.toString()));
-            },
-          );
+          for (var id in idList) {
+            if (await isFriendExist(id.toString()) != null) {
+              friendIDs.add(SpaceUser(uid: id.toString()));
+            } else {
+              friendRef.update({
+                "friends": FieldValue.arrayRemove([
+                  id.toString(),
+                ]),
+              });
+            }
+          }
           callback(friendIDs);
+          // updateUserLocationData();
         } catch (e) {
           print(e);
         }
@@ -232,19 +268,32 @@ class AuthService {
     return false;
   }
 
-  Future<bool> isFriendExist(String friendID) async {
+  Future<bool> isFriendExist(String friendPublicID) async {
     return (await firestore
                 .collection("users")
-                .where("publicID", isEqualTo: friendID)
+                .where("publicID", isEqualTo: friendPublicID)
                 .get())
             .docs
             .length >
         0;
   }
 
-  Future<bool> addFriendByID(String friendID) async {
-    print(friendID);
-    if (friendID != userId && await isFriendExist(friendID)) {
+  Future<String> getFriendID(String friendID) async {
+    QuerySnapshot query = (await firestore
+        .collection("users")
+        .where("publicID", isEqualTo: friendID)
+        .get());
+    if (query.docs.length > 0) {
+      return query.docs[0].id;
+    }
+    return null;
+  }
+
+  Future<bool> addFriendByID(String friendPublicID) async {
+    //Todo: store friend request independently
+    String friendID = await getFriendID(friendPublicID);
+    if (friendID != null && friendID != userId) {
+      //add friend's id in user's list
       firestore.collection("Friend_lists").doc(userId).update(
         {
           "friends": FieldValue.arrayUnion(
@@ -252,10 +301,17 @@ class AuthService {
           ),
         },
       );
-      print("true");
+
+      //add current user's id in friend's list
+      firestore.collection("Friend_lists").doc(friendID).update(
+        {
+          "friends": FieldValue.arrayUnion(
+            [userId],
+          ),
+        },
+      );
       return true;
     }
-    print("false");
     return false;
   }
 }
